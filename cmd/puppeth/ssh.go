@@ -172,6 +172,7 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 
 	client, err := ssh.Dial("tcp", hostport, &ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck})
 	if err != nil {
+		logger.Trace("Dialing remote SSH server", "err", err)
 		return nil, err
 	}
 	// Connection established, return our utility wrapper
