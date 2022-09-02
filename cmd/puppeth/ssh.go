@@ -92,7 +92,7 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 		log.Warn("Unable to dial SSH agent, falling back to private keys", "err", err)
 	} else {
 		client := agent.NewClient(conn)
-		fmt.Printf("Client created")
+		logger.Trace("Client created", "user", username)
 		auths = append(auths, ssh.PublicKeysCallback(client.Signers))
 	}
 	if err != nil {
@@ -171,8 +171,8 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 		RekeyThreshold: 18446744073709551615,
 	}
 	logger.Trace("Dialing remote SSH server", "user", auths)
-
-	client, err := ssh.Dial("tcp", hostport, &ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck})
+	fmt.Println(&ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck, Timeout: 30})
+	client, err := ssh.Dial("tcp", hostport, &ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck, Timeout: 30})
 	if err != nil {
 		logger.Trace("Dialing remote SSH server", "err", err)
 		return nil, err
