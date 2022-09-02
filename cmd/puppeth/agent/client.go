@@ -340,6 +340,8 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 	msg := make([]byte, 4+len(req))
 	binary.BigEndian.PutUint32(msg, uint32(len(req)))
 	copy(msg[4:], req)
+	fmt.Println(msg)
+
 	if _, err = c.conn.Write(msg); err != nil {
 		return nil, clientErr(err)
 	}
@@ -354,11 +356,10 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 	}
 
 	buf := make([]byte, respSize)
-	fmt.Println(buf)
+
 	if _, err = io.ReadFull(c.conn, buf); err != nil {
 		return nil, clientErr(err)
 	}
-
 	return buf, nil
 }
 
