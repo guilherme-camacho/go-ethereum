@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"strconv"
 	"sync"
 
 	"crypto"
@@ -349,7 +350,7 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 	}
 	respSize := binary.BigEndian.Uint32(respSizeBuf[:])
 	if respSize > maxAgentResponseBytes {
-		return nil, clientErr(errors.New("response too large"))
+		return nil, clientErr(errors.New("response too large " + strconv.Itoa(int(respSize))))
 	}
 
 	buf := make([]byte, respSize)
