@@ -171,7 +171,9 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 		RekeyThreshold: 18446744073709551615,
 	}
 	logger.Trace("Dialing remote SSH server", "user", auths)
-	fmt.Println(&ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck, Timeout: 30})
+	fmt.Println(username)
+	fmt.Println(sshConfig)
+	fmt.Println(auths)
 	client, err := ssh.Dial("tcp", hostport, &ssh.ClientConfig{User: username, Config: sshConfig, Auth: auths, HostKeyCallback: keycheck, Timeout: 30})
 	if err != nil {
 		logger.Trace("Dialing remote SSH server", "err", err)
