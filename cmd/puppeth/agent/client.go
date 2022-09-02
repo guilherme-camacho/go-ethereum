@@ -312,6 +312,7 @@ type client struct {
 // NewClient returns an Agent that talks to an ssh-agent process over
 // the given connection.
 func NewClient(rw io.ReadWriter) ExtendedAgent {
+	fmt.Println(rw)
 	return &client{conn: rw}
 }
 
