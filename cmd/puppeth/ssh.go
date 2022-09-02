@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/cmd/puppeth/agent"
 	"net"
 	"os"
 	"os/user"
@@ -83,15 +82,16 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 	}
 
 	// Configure the supported authentication methods (ssh agent, private key and password)
+
 	var (
 		auths []ssh.AuthMethod
-		conn  net.Conn
+		//conn  net.Conn
 	)
-	if conn, err = net.Dial("unix", os.Getenv(EnvSSHAuthSock)); err != nil {
+	if _, err = net.Dial("unix", os.Getenv(EnvSSHAuthSock)); err != nil {
 		log.Warn("Unable to dial SSH agent, falling back to private keys", "err", err)
 	} else {
-		client := agent.NewClient(conn)
-		auths = append(auths, ssh.PublicKeysCallback(client.Signers))
+		//client := agent.NewClient(conn)
+		//auths = append(auths, ssh.PublicKeysCallback(client.Signers))
 	}
 	if err != nil {
 		path := filepath.Join(user.HomeDir, ".ssh", identity)
