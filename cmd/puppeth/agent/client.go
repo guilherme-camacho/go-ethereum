@@ -353,6 +353,7 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 		return nil, clientErr(err)
 	}
 	respSize := binary.BigEndian.Uint32(respSizeBuf[:])
+	fmt.Println(respSize)
 	if respSize > maxAgentResponseBytes {
 		return nil, clientErr(errors.New("response too large " + strconv.Itoa(int(respSize))))
 	}
