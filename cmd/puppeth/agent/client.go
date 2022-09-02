@@ -354,10 +354,10 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 	}
 
 	buf := make([]byte, respSize)
+	fmt.Println(buf)
 	if _, err = io.ReadFull(c.conn, buf); err != nil {
 		return nil, clientErr(err)
 	}
-	fmt.Println(buf)
 
 	return buf, nil
 }
