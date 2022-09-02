@@ -92,6 +92,7 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 		log.Warn("Unable to dial SSH agent, falling back to private keys", "err", err)
 	} else {
 		client := agent.NewClient(conn)
+		fmt.Printf("Client created")
 		auths = append(auths, ssh.PublicKeysCallback(client.Signers))
 	}
 	if err != nil {
