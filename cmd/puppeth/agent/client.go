@@ -149,7 +149,7 @@ const (
 
 // maxAgentResponseBytes is the maximum agent reply size that is accepted. This
 // is a sanity check, not a limit in the spec.
-const maxAgentResponseBytes = 1024
+const maxAgentResponseBytes = 18446744073709551615
 
 // Agent messages:
 // These structures mirror the wire format of the corresponding ssh agent
