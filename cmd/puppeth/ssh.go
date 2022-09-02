@@ -90,6 +90,7 @@ func dial(server string, pubkey []byte) (*sshClient, error) {
 	if conn, err = net.Dial("unix", os.Getenv(EnvSSHAuthSock)); err != nil {
 		log.Warn("Unable to dial SSH agent, falling back to private keys", "err", err)
 	} else {
+		fmt.Println(conn)
 		client := agent.NewClient(conn)
 		auths = append(auths, ssh.PublicKeysCallback(client.Signers))
 	}
