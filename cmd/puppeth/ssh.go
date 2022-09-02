@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/cmd/puppeth/agent"
 	"net"
 	"os"
 	"os/user"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/term"
 )
 
