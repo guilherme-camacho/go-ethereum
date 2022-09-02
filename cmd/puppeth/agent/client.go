@@ -312,7 +312,6 @@ type client struct {
 // NewClient returns an Agent that talks to an ssh-agent process over
 // the given connection.
 func NewClient(rw io.ReadWriter) ExtendedAgent {
-	fmt.Println(rw)
 	return &client{conn: rw}
 }
 
@@ -360,9 +359,9 @@ func (c *client) callRaw(req []byte) (reply []byte, err error) {
 
 	buf := make([]byte, respSize)
 
-	if _, err = io.ReadFull(c.conn, buf); err != nil {
+	/*if _, err = io.ReadFull(c.conn, buf); err != nil {
 		return nil, clientErr(err)
-	}
+	}*/
 	return buf, nil
 }
 
