@@ -108,6 +108,10 @@ func deployExplorer(client *sshClient, network string, bootnodes []string, confi
 		"WebPort":     config.port,
 		"Transformer": transformer,
 	})
+
+	fmt.Println(dockerfile)
+	fmt.Println(composefile)
+	
 	files[filepath.Join(workdir, "docker-compose.yaml")] = composefile.Bytes()
 	files[filepath.Join(workdir, "genesis.json")] = config.node.genesis
 
