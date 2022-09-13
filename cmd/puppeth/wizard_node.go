@@ -82,6 +82,10 @@ func (w *wizard) deployNode(boot bool) {
 	fmt.Printf("Which TCP/UDP port to listen on? (default = %d)\n", infos.port)
 	infos.port = w.readDefaultInt(infos.port)
 
+	fmt.Println()
+	fmt.Printf("Which IP node will be listen\n")
+	infos.nodeip = w.readDefaultString(infos.nodeip)
+
 	// Figure out how many peers to allow (different based on node type)
 	fmt.Println()
 	fmt.Printf("How many peers to allow connecting? (default = %d)\n", infos.peersTotal)

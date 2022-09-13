@@ -100,7 +100,21 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 	template.Must(template.New("").Parse(nodeDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.network,
 		"Port":      config.port,
-		"IP":        client.address,
+		"IP":        config.nodeip,
+		"Peers":     config.peersTotal,
+		"LightFlag": lightFlag,
+		"Bootnodes": strings.Join(bootnodes, ","),
+		"Ethstats":  config.ethstats,
+		"Etherbase": config.etherbase,
+		"GasTarget": uint64(1000000 * config.gasTarget),
+		"GasLimit":  uint64(1000000 * config.gasLimit),
+		"GasPrice":  uint64(1000000000 * config.gasPrice),
+		"Unlock":    config.keyJSON != "",
+	})
+	fmt.Println(map[string]interface{}{
+		"NetworkID": config.network,
+		"Port":      config.port,
+		"IP":        config.nodeip,
 		"Peers":     config.peersTotal,
 		"LightFlag": lightFlag,
 		"Bootnodes": strings.Join(bootnodes, ","),
@@ -157,6 +171,7 @@ type nodeInfos struct {
 	datadir    string
 	ethashdir  string
 	ethstats   string
+	nodeip     string
 	port       int
 	enode      string
 	peersTotal int
@@ -257,6 +272,7 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 		datadir:    infos.volumes["/root/.ethereum"],
 		ethashdir:  infos.volumes["/root/.ethash"],
 		port:       port,
+		nodeip:     infos.envvars["NODE_IP"],
 		peersTotal: totalPeers,
 		peersLight: lightPeers,
 		ethstats:   infos.envvars["STATS_NAME"],
