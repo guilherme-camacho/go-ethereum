@@ -40,6 +40,10 @@ ADD genesis.json /genesis.json
 	ADD signer.pass /signer.pass
 {{end}}
 
+EXPOSE {{.Port}}
+EXPOSE {{.WebPort}}
+EXPOSE {{.WebSocketPort}}
+
 RUN echo 'geth --cache 512 init /genesis.json' > geth.sh
 
 {{if .Unlock}} 
@@ -86,6 +90,12 @@ services:
         max-size: "1m"
         max-file: "10"
     restart: always
+    networks:
+      - {{.Type}}_default
+networks:
+  host:
+    name: {{.Type}}_default
+    external: true
 `
 
 // deployNode deploys a new Ethereum node container to a remote machine via SSH,
