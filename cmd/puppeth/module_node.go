@@ -91,10 +91,10 @@ services:
         max-file: "10"
     restart: always
     networks:
-      - {{.Type}}_default
+      - {{.Network}}_default
 networks:
   host:
-    name: {{.Type}}_default
+    name: {{.Network}}_default
     external: true
 `
 
