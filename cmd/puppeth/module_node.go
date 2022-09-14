@@ -50,9 +50,8 @@ RUN echo 'geth --cache 512 init /genesis.json' > geth.sh
 RUN echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh
 RUN	echo 'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} \
 	--maxpeers {{.Peers}} {{.LightFlag}} --ethstats {{.Ethstats}} {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} \
-	--mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} \
+	--mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --allow-insecure-unlock --mine{{end}} \
 	--http --http.addr 0.0.0.0 --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 \
-	--allow-insecure-unlock \
 	--ws --ws.port {{.WebSocketPort}} --ws.addr 0.0.0.0 --ws.api web3,eth --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
 {{end}}
 
