@@ -142,6 +142,7 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 		"GasLimit":      config.gasLimit,
 		"GasPrice":      config.gasPrice,
 	})
+	fmt.Printf(composefile.String())
 	files[filepath.Join(workdir, "docker-compose.yaml")] = composefile.Bytes()
 
 	files[filepath.Join(workdir, "genesis.json")] = config.genesis
