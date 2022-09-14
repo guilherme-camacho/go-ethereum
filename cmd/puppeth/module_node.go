@@ -44,17 +44,17 @@ EXPOSE {{.Port}}
 EXPOSE {{.WebPort}}
 EXPOSE {{.WebSocketPort}}
 
-RUN echo 'geth --cache 512 init /genesis.json' > geth.sh
+RUN echo 'geth init /genesis.json' > geth.sh
 
 {{if .Unlock}} 
 RUN echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh
 {{end}}
 
-RUN	echo 'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} \
-	--maxpeers {{.Peers}} {{.LightFlag}} --ethstats {{.Ethstats}} {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} \
-	--mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --allow-insecure-unlock --mine{{end}} \
+RUN	echo 'exec geth --syncmode 'full' --networkid {{.NetworkID}} --port {{.Port}} --nat extip:{{.IP}} \
+	--ethstats {{.Ethstats}} {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} \
 	--http --http.addr 0.0.0.0 --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 \
-	--ws --ws.port {{.WebSocketPort}} --ws.addr 0.0.0.0 --ws.api web3,eth --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
+	--ws --ws.port {{.WebSocketPort}} --ws.addr 0.0.0.0 --ws.api web3,eth \
+	{{if .Unlock}}--unlock 0 --mine --password /signer.pass --allow-insecure-unlock --miner.gastarget {{.GasTarget}} --miner.gasprice {{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
