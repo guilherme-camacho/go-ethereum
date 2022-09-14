@@ -95,7 +95,6 @@ services:
 
 networks:
   {{.Network}}_default:
-    name: {{.Network}}_default
     external: true
 `
 
