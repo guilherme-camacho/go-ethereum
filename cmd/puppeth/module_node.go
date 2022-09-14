@@ -39,13 +39,18 @@ ADD genesis.json /genesis.json
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
 {{end}}
-RUN echo 'geth --cache 512 init /genesis.json' > geth.sh && \{{if .Unlock}}
-RUN	echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh && \{{end}}
+
+RUN echo 'geth --cache 512 init /genesis.json' > geth.sh
+
+{{if .Unlock}} 
+RUN echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh
 RUN	echo 'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} \
 	--maxpeers {{.Peers}} {{.LightFlag}} --ethstats {{.Ethstats}} {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} \
 	--mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} \
 	--http --http.addr {{.IP}} --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 \
 	--ws --ws.port {{.WebSocketPort}} --ws.addr {{.IP}} --ws.api web3,eth --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
+{{end}}
+
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
 
