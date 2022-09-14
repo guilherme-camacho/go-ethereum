@@ -92,8 +92,9 @@ services:
     restart: always
     networks:
       - {{.Network}}_default
+
 networks:
-  host:
+  {{.Network}}_default:
     name: {{.Network}}_default
     external: true
 `
