@@ -82,6 +82,17 @@ func (w *wizard) deployNode(boot bool) {
 	fmt.Printf("Which TCP/UDP port to listen on? (default = %d)\n", infos.port)
 	infos.port = w.readDefaultInt(infos.port)
 
+	// Figure out which web port to listen on
+	fmt.Println()
+	fmt.Printf("Which Web port to listen on\n")
+	infos.webPort = w.readDefaultInt(infos.webPort)
+
+	// Figure out which webSocket port to listen on
+	fmt.Println()
+	fmt.Printf("Which Web Socket port to listen on\n")
+	infos.webSocketPort = w.readDefaultInt(infos.webSocketPort)
+
+	// Set the node IP
 	fmt.Println()
 	fmt.Printf("Which IP node will be listen\n")
 	infos.nodeip = w.readDefaultString(infos.nodeip)

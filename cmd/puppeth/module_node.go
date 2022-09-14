@@ -42,7 +42,7 @@ ADD genesis.json /genesis.json
 RUN \
   echo 'geth --cache 512 init /genesis.json' > geth.sh && \{{if .Unlock}}
 	echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh && \{{end}}
-	echo $'exec geth --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} --mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
+	echo $'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} --mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --http --http.addr {{.IP}} --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 --ws --ws.port {{.WebSocketPort}} --ws.addr {{.IP}} --ws.origins "" --ws.api "web3, eth" --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -59,6 +59,8 @@ services:
     ports:
       - "{{.Port}}:{{.Port}}"
       - "{{.Port}}:{{.Port}}/udp"
+      - "{{.WebSocketPort}}:{{.WebSocketPort}}"
+      - "{{.WebPort}}:{{.WebPort}}"
     volumes:
       - {{.Datadir}}:/root/.ethereum{{if .Ethashdir}}
       - {{.Ethashdir}}:/root/.ethash{{end}}
@@ -100,20 +102,7 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 	template.Must(template.New("").Parse(nodeDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID": config.network,
 		"Port":      config.port,
-		"IP":        config.nodeip,
-		"Peers":     config.peersTotal,
-		"LightFlag": lightFlag,
-		"Bootnodes": strings.Join(bootnodes, ","),
-		"Ethstats":  config.ethstats,
-		"Etherbase": config.etherbase,
-		"GasTarget": uint64(1000000 * config.gasTarget),
-		"GasLimit":  uint64(1000000 * config.gasLimit),
-		"GasPrice":  uint64(1000000000 * config.gasPrice),
-		"Unlock":    config.keyJSON != "",
-	})
-	fmt.Println(map[string]interface{}{
-		"NetworkID": config.network,
-		"Port":      config.port,
+		"WebPort":   config.webPort,
 		"IP":        config.nodeip,
 		"Peers":     config.peersTotal,
 		"LightFlag": lightFlag,
@@ -129,19 +118,21 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 
 	composefile := new(bytes.Buffer)
 	template.Must(template.New("").Parse(nodeComposefile)).Execute(composefile, map[string]interface{}{
-		"Type":       kind,
-		"Datadir":    config.datadir,
-		"Ethashdir":  config.ethashdir,
-		"Network":    network,
-		"Port":       config.port,
-		"TotalPeers": config.peersTotal,
-		"Light":      config.peersLight > 0,
-		"LightPeers": config.peersLight,
-		"Ethstats":   getEthName(config.ethstats),
-		"Etherbase":  config.etherbase,
-		"GasTarget":  config.gasTarget,
-		"GasLimit":   config.gasLimit,
-		"GasPrice":   config.gasPrice,
+		"Type":          kind,
+		"Datadir":       config.datadir,
+		"Ethashdir":     config.ethashdir,
+		"Network":       network,
+		"WebPort":       config.webPort,
+		"WebSocketPort": config.webSocketPort,
+		"Port":          config.port,
+		"TotalPeers":    config.peersTotal,
+		"Light":         config.peersLight > 0,
+		"LightPeers":    config.peersLight,
+		"Ethstats":      getEthName(config.ethstats),
+		"Etherbase":     config.etherbase,
+		"GasTarget":     config.gasTarget,
+		"GasLimit":      config.gasLimit,
+		"GasPrice":      config.gasPrice,
 	})
 	files[filepath.Join(workdir, "docker-compose.yaml")] = composefile.Bytes()
 
@@ -166,22 +157,24 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 // nodeInfos is returned from a boot or seal node status check to allow reporting
 // various configuration parameters.
 type nodeInfos struct {
-	genesis    []byte
-	network    int64
-	datadir    string
-	ethashdir  string
-	ethstats   string
-	nodeip     string
-	port       int
-	enode      string
-	peersTotal int
-	peersLight int
-	etherbase  string
-	keyJSON    string
-	keyPass    string
-	gasTarget  float64
-	gasLimit   float64
-	gasPrice   float64
+	genesis       []byte
+	network       int64
+	datadir       string
+	ethashdir     string
+	ethstats      string
+	nodeip        string
+	webPort       int
+	webSocketPort int
+	port          int
+	enode         string
+	peersTotal    int
+	peersLight    int
+	etherbase     string
+	keyJSON       string
+	keyPass       string
+	gasTarget     float64
+	gasLimit      float64
+	gasPrice      float64
 }
 
 // Report converts the typed struct into a plain string->string map, containing
@@ -238,6 +231,8 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 	// Resolve a few types from the environmental variables
 	totalPeers, _ := strconv.Atoi(infos.envvars["TOTAL_PEERS"])
 	lightPeers, _ := strconv.Atoi(infos.envvars["LIGHT_PEERS"])
+	webPort, _ := strconv.Atoi(infos.envvars["WEB_PORT"])
+	webSocketPort, _ := strconv.Atoi(infos.envvars["WEB_SOCKET_PORT"])
 	gasTarget, _ := strconv.ParseFloat(infos.envvars["GAS_TARGET"], 64)
 	gasLimit, _ := strconv.ParseFloat(infos.envvars["GAS_LIMIT"], 64)
 	gasPrice, _ := strconv.ParseFloat(infos.envvars["GAS_PRICE"], 64)
@@ -268,20 +263,22 @@ func checkNode(client *sshClient, network string, boot bool) (*nodeInfos, error)
 	}
 	// Assemble and return the useful infos
 	stats := &nodeInfos{
-		genesis:    genesis,
-		datadir:    infos.volumes["/root/.ethereum"],
-		ethashdir:  infos.volumes["/root/.ethash"],
-		port:       port,
-		nodeip:     infos.envvars["NODE_IP"],
-		peersTotal: totalPeers,
-		peersLight: lightPeers,
-		ethstats:   infos.envvars["STATS_NAME"],
-		etherbase:  infos.envvars["MINER_NAME"],
-		keyJSON:    keyJSON,
-		keyPass:    keyPass,
-		gasTarget:  gasTarget,
-		gasLimit:   gasLimit,
-		gasPrice:   gasPrice,
+		genesis:       genesis,
+		datadir:       infos.volumes["/root/.ethereum"],
+		ethashdir:     infos.volumes["/root/.ethash"],
+		webPort:       webPort,
+		webSocketPort: webSocketPort,
+		port:          port,
+		nodeip:        infos.envvars["NODE_IP"],
+		peersTotal:    totalPeers,
+		peersLight:    lightPeers,
+		ethstats:      infos.envvars["STATS_NAME"],
+		etherbase:     infos.envvars["MINER_NAME"],
+		keyJSON:       keyJSON,
+		keyPass:       keyPass,
+		gasTarget:     gasTarget,
+		gasLimit:      gasLimit,
+		gasPrice:      gasPrice,
 	}
 	stats.enode = string(enode)
 
