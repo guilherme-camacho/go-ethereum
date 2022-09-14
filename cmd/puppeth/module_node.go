@@ -39,10 +39,9 @@ ADD genesis.json /genesis.json
 	ADD signer.json /signer.json
 	ADD signer.pass /signer.pass
 {{end}}
-RUN \
-  echo 'geth --cache 512 init /genesis.json' > geth.sh && \{{if .Unlock}}
-	echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh && \{{end}}
-	echo $'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} --mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --http --http.addr {{.IP}} --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 --ws --ws.port {{.WebSocketPort}} --ws.addr {{.IP}} --ws.api web3,eth --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
+RUN echo 'geth --cache 512 init /genesis.json' > geth.sh && \{{if .Unlock}}
+RUN	echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh && \{{end}}
+RUN	echo $'exec geth --syncmode 'full' --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --nat extip:{{.IP}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} {{if .Etherbase}}--miner.etherbase {{.Etherbase}} --mine --miner.threads 1{{end}} {{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --http --http.addr {{.IP}} --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 --ws --ws.port {{.WebSocketPort}} --ws.addr {{.IP}} --ws.api web3,eth --miner.gastarget {{.GasTarget}} --miner.gaslimit {{.GasLimit}} --miner.gasprice {{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -100,19 +99,20 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 	}
 	dockerfile := new(bytes.Buffer)
 	template.Must(template.New("").Parse(nodeDockerfile)).Execute(dockerfile, map[string]interface{}{
-		"NetworkID": config.network,
-		"Port":      config.port,
-		"WebPort":   config.webPort,
-		"IP":        config.nodeip,
-		"Peers":     config.peersTotal,
-		"LightFlag": lightFlag,
-		"Bootnodes": strings.Join(bootnodes, ","),
-		"Ethstats":  config.ethstats,
-		"Etherbase": config.etherbase,
-		"GasTarget": uint64(1000000 * config.gasTarget),
-		"GasLimit":  uint64(1000000 * config.gasLimit),
-		"GasPrice":  uint64(1000000000 * config.gasPrice),
-		"Unlock":    config.keyJSON != "",
+		"NetworkID":     config.network,
+		"Port":          config.port,
+		"WebPort":       config.webPort,
+		"WebSocketPort": config.webSocketPort,
+		"IP":            config.nodeip,
+		"Peers":         config.peersTotal,
+		"LightFlag":     lightFlag,
+		"Bootnodes":     strings.Join(bootnodes, ","),
+		"Ethstats":      config.ethstats,
+		"Etherbase":     config.etherbase,
+		"GasTarget":     uint64(1000000 * config.gasTarget),
+		"GasLimit":      uint64(1000000 * config.gasLimit),
+		"GasPrice":      uint64(1000000000 * config.gasPrice),
+		"Unlock":        config.keyJSON != "",
 	})
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
