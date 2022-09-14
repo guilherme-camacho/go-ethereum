@@ -54,7 +54,7 @@ RUN	echo 'exec geth --syncmode 'full' --networkid {{.NetworkID}} --port {{.Port}
 	{{if .Bootnodes}}--bootnodes {{.Bootnodes}}{{end}} \
 	--http --http.addr 0.0.0.0 --http.port {{.WebPort}} --http.api admin,eth,miner,net,txpool,personal,web3 \
 	--ws --ws.port {{.WebSocketPort}} --ws.addr 0.0.0.0 --ws.api web3,eth \
-	{{if .Unlock}}--unlock 0 --mine --password /signer.pass --allow-insecure-unlock --miner.gastarget {{.GasTarget}} --miner.gasprice {{.GasPrice}}{{end}}' >> geth.sh
+	{{if .Unlock}}--unlock {{.UnlockKey}} --mine --password /signer.pass --allow-insecure-unlock --miner.gastarget {{.GasTarget}} --miner.gasprice {{.GasPrice}}{{end}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -116,6 +116,10 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 	if config.peersLight > 0 {
 		lightFlag = fmt.Sprintf("--light.maxpeers=%d --light.serve=50", config.peersLight)
 	}
+	var key struct {
+		Address string `json:"address"`
+	}
+	json.Unmarshal([]byte(config.keyJSON), &key)
 	dockerfile := new(bytes.Buffer)
 	template.Must(template.New("").Parse(nodeDockerfile)).Execute(dockerfile, map[string]interface{}{
 		"NetworkID":     config.network,
@@ -132,7 +136,10 @@ func deployNode(client *sshClient, network string, bootnodes []string, config *n
 		"GasLimit":      uint64(1000000 * config.gasLimit),
 		"GasPrice":      uint64(1000000000 * config.gasPrice),
 		"Unlock":        config.keyJSON != "",
+		"UnlockKey":     key.Address,
 	})
+
+	fmt.Printf(config.keyJSON)
 	files[filepath.Join(workdir, "Dockerfile")] = dockerfile.Bytes()
 
 	composefile := new(bytes.Buffer)
